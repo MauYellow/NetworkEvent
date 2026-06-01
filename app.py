@@ -102,6 +102,13 @@ def update_airtable_record(record_id, fields):
     return r.json()
 
 
+def delete_airtable_record(record_id):
+    url     = f"https://api.airtable.com/v0/{BASE_ID}/{USERS_TABLE}/{record_id}"
+    headers = {"Authorization": f"Bearer {AIRTABLE_TOKEN}"}
+    r = requests.delete(url, headers=headers, timeout=20, verify=False)
+    r.raise_for_status()
+
+
 def parse_users(records):
     rows = []
     for record in records:
@@ -347,7 +354,7 @@ def api_profile():
                     "linkedin":              f.get("Linkedin", ""),
                     "lat":                   lat,
                     "lon":                   lon,
-                    "sport_events_active":   bool(events),
+                    "sport_events_active":   (f.get("Working_event") or "").strip().lower() == "yes",
                     "sport_events_selected": events,
                 }
                 # Airtable is source of truth; local fills non-Airtable fields
@@ -439,6 +446,7 @@ def api_save_job():
         return jsonify({"ok": False, "error": f'"{full_name}" is already registered in the database.'}), 409
 
     pwd_hash   = generate_password_hash(password)
+    sport_active = data.get("sport_active", False)
     new_fields = {
         "Name":            full_name,
         "Email":           email,
@@ -448,6 +456,7 @@ def api_save_job():
         "Role":            data.get("role", ""),
         "Functional Area": data.get("area", ""),
         "Linkedin":        data.get("linkedin", ""),
+        "Working_event":   "Yes" if sport_active else "No",
     }
     new_fields = {k: v for k, v in new_fields.items() if v}
 
@@ -489,6 +498,38 @@ def api_flag_user():
     new_flags = int(record.get("fields", {}).get("flags") or 0) + 1
     update_airtable_record(record_id, {"flags": new_flags})
     return jsonify({"ok": True, "flags": new_flags})
+
+
+@app.route("/api/delete-account", methods=["POST"])
+@login_required
+def api_delete_account():
+    email       = session.get("user_email", "").lower().strip()
+    airtable_id = session.get("airtable_id")
+
+    # 1. Delete from Airtable
+    if airtable_id:
+        try:
+            delete_airtable_record(airtable_id)
+        except Exception:
+            pass  # Best-effort; proceed with local cleanup regardless
+    else:
+        # Fallback: find by email
+        try:
+            record = find_user_by_email(email)
+            if record:
+                delete_airtable_record(record["id"])
+        except Exception:
+            pass
+
+    # 2. Remove from local auth cache
+    auth = load_auth()
+    if email in auth:
+        del auth[email]
+        save_auth(auth)
+
+    # 3. Clear session
+    session.clear()
+    return jsonify({"ok": True})
 
 
 if __name__ == "__main__":

@@ -245,6 +245,51 @@
     .btn-primary:hover    { background: #2d4a2e; }
     .btn-primary:disabled { background: #8aad8a; cursor: default; }
 
+    .btn-danger {
+        padding: 8px 16px;
+        background: transparent;
+        color: #c0392b;
+        border: 1px solid #e8b4b0;
+        border-radius: 7px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        white-space: nowrap;
+    }
+    .btn-danger:hover { background: #fff0ee; border-color: #c0392b; }
+
+    .delete-confirm-input {
+        width: 100%;
+        padding: 9px 12px;
+        font-size: 14px;
+        border: 1px solid #DDD5C8;
+        border-radius: 7px;
+        outline: none;
+        margin-top: 12px;
+        text-align: center;
+        letter-spacing: 2px;
+        transition: border-color 0.15s;
+    }
+    .delete-confirm-input:focus { border-color: #e74c3c; box-shadow: 0 0 0 3px rgba(231,76,60,0.12); }
+    .btn-danger-confirm {
+        padding: 10px 24px;
+        background: #e74c3c;
+        color: white;
+        border: none;
+        border-radius: 7px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+    .btn-danger-confirm:hover    { background: #c0392b; }
+    .btn-danger-confirm:disabled { background: #e8a8a2; cursor: default; }
+
     .btn-secondary {
         padding: 10px 20px;
         background: #F5F0E8;
@@ -419,8 +464,8 @@
                 </div>
 
                 <div class="location-section">
-                    <label style="margin-bottom:4px">Your location</label>
-                    <p>Click on the map to drop a pin on your city.</p>
+                    <label style="margin-bottom:4px">Your current working location</label>
+                    <p>Click on the map to drop a pin in the city of the event.</p>
                     <div id="locationMap"></div>
                     <div class="location-coords" id="coordsDisplay"></div>
                     <input type="hidden" id="lat" />
@@ -477,6 +522,9 @@
                     <span class="status-msg" id="saveStatus"></span>
                     <button class="btn-primary" id="saveBtn" onclick="saveProfile()">Save Profile</button>
                 </div>
+                <div style="margin-top:6px; text-align:right">
+                    <button class="btn-danger" onclick="openDeleteModal()">🗑 Delete my account</button>
+                </div>
             </div>
         </div>
 
@@ -491,6 +539,24 @@
         <div class="modal-title" id="modalTitle"></div>
         <div class="modal-msg"   id="modalMsg"></div>
         <button class="btn-primary" onclick="closeModal()">OK</button>
+    </div>
+</div>
+
+<!-- ── Delete account confirmation modal ─────────────────────────── -->
+<div id="deleteModal" class="modal-overlay" style="display:none">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px">
+        <div class="modal-icon">⚠️</div>
+        <div class="modal-title" style="color:#c0392b">Delete your account?</div>
+        <div class="modal-msg" style="text-align:left; font-size:13px; color:#555; line-height:1.6">
+            This action is <strong>permanent and irreversible</strong>. All your data — profile, location, and event association — will be permanently deleted from our platform in compliance with GDPR Art. 17 (Right to erasure).<br><br>
+            To confirm, type <strong>DELETE</strong> in the field below:
+        </div>
+        <input type="text" id="deleteConfirmInput" class="delete-confirm-input"
+               placeholder="Type DELETE to confirm" oninput="onDeleteInput()" autocomplete="off" />
+        <div style="display:flex; gap:10px; justify-content:center; margin-top:18px">
+            <button class="btn-secondary" onclick="closeDeleteModal()" style="flex:1">Cancel</button>
+            <button class="btn-danger-confirm" id="deleteConfirmBtn" onclick="deleteAccount()" disabled style="flex:1">Delete permanently</button>
+        </div>
     </div>
 </div>
 
@@ -796,6 +862,45 @@
             btn.disabled = false;
         }
     }
+
+    // ── Delete account ────────────────────────────────────────────────────────
+    function openDeleteModal() {
+        document.getElementById('deleteConfirmInput').value = '';
+        document.getElementById('deleteConfirmBtn').disabled = true;
+        document.getElementById('deleteModal').style.display = 'flex';
+        setTimeout(() => document.getElementById('deleteConfirmInput').focus(), 50);
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    function onDeleteInput() {
+        const val = document.getElementById('deleteConfirmInput').value.trim();
+        document.getElementById('deleteConfirmBtn').disabled = (val !== 'DELETE');
+    }
+
+    async function deleteAccount() {
+        const btn = document.getElementById('deleteConfirmBtn');
+        btn.disabled = true;
+        btn.textContent = 'Deleting…';
+        try {
+            const res = await fetch('/api/delete-account', { method: 'POST' });
+            if (!res.ok) throw new Error('Server error');
+            closeDeleteModal();
+            showModal('✅', 'Account deleted', 'Your account and all associated data have been permanently deleted.', () => {
+                window.location.href = '/login';
+            });
+        } catch {
+            btn.disabled = false;
+            btn.textContent = 'Delete permanently';
+            showModal('❌', 'Error', 'Could not delete your account. Please try again or contact support.');
+        }
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeDeleteModal();
+    });
 
     // ── Init ───────────────────────────────────────────────────────────────────
     loadProfile();

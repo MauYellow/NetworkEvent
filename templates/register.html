@@ -370,19 +370,21 @@
 
             <div id="sportPanel">
                 <div class="form-row" style="margin-bottom:0">
-                    <label>Select the event you are currently working on <span style="color:#888;font-size:11px;font-weight:400">(optional)</span></label>
-                    <div class="events-checklist" id="eventsChecklist">
+                    <label>Select the event you are currently working on <span style="color:#e74c3c">*</span></label>
+                    <div class="events-checklist" id="eventsChecklist" style="transition:border-color 0.15s">
                         <div class="events-loading">Loading…</div>
                     </div>
+                    <div id="eventError" style="display:none;font-size:12px;color:#e74c3c;margin-top:5px">⚠ Please select the event you are working on.</div>
                 </div>
 
                 <div class="location-section">
-                    <label style="margin-bottom:4px">Your location <span style="color:#888;font-size:11px;font-weight:400">(optional)</span></label>
-                    <p>Click on the map to drop a pin on your city.</p>
-                    <div id="locationMap"></div>
+                    <label style="margin-bottom:4px">Your current working location <span style="color:#e74c3c">*</span></label>
+                    <p>Click on the map to drop a pin in the city of the event.</p>
+                    <div id="locationMap" style="transition:border-color 0.15s"></div>
                     <div class="location-coords" id="coordsDisplay"></div>
                     <input type="hidden" id="lat" />
                     <input type="hidden" id="lon" />
+                    <div id="locationError" style="display:none;font-size:12px;color:#e74c3c;margin-top:5px">⚠ Please click on the map to set your location.</div>
                 </div>
             </div>
         </div>
@@ -612,14 +614,11 @@
 
     // ── Register ──────────────────────────────────────────────────────────────
     async function register() {
-        const fname  = document.getElementById('fname').value.trim();
-        const lname  = document.getElementById('lname').value.trim();
-        const email  = document.getElementById('email').value.trim();
-        const events = getCheckedEvents();
-        const lat    = document.getElementById('lat').value;
-        const lon    = document.getElementById('lon').value;
-        const pwd    = document.getElementById('regPwd').value;
-        const pwdC   = document.getElementById('regPwdConfirm').value;
+        const fname = document.getElementById('fname').value.trim();
+        const lname = document.getElementById('lname').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const pwd   = document.getElementById('regPwd').value;
+        const pwdC  = document.getElementById('regPwdConfirm').value;
 
         if (!document.getElementById('gdprConsent').checked) {
             document.getElementById('gdprNote').style.display = 'block';
@@ -643,6 +642,41 @@
             return;
         }
 
+        if (document.getElementById('sportActive').checked) {
+            const events      = getCheckedEvents();
+            const lat         = document.getElementById('lat').value;
+            const lon         = document.getElementById('lon').value;
+            const eventErr    = document.getElementById('eventError');
+            const locationErr = document.getElementById('locationError');
+            const checklist   = document.getElementById('eventsChecklist');
+            const mapEl       = document.getElementById('locationMap');
+            let sportValid    = true;
+
+            if (!events.length) {
+                eventErr.style.display  = 'block';
+                checklist.style.borderColor = '#e74c3c';
+                sportValid = false;
+            } else {
+                eventErr.style.display  = 'none';
+                checklist.style.borderColor = '';
+            }
+
+            if (!lat || !lon) {
+                locationErr.style.display = 'block';
+                mapEl.style.borderColor   = '#e74c3c';
+                sportValid = false;
+            } else {
+                locationErr.style.display = 'none';
+                mapEl.style.borderColor   = '';
+            }
+
+            if (!sportValid) {
+                const first = !events.length ? checklist : mapEl;
+                first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+        }
+
         const btn    = document.getElementById('registerBtn');
         const status = document.getElementById('regStatus');
         btn.disabled     = true;
@@ -655,7 +689,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({
                     fname, lname, email, password: pwd,
-                    events, lat, lon,
+                    sport_active: document.getElementById('sportActive').checked,
+                    events:   getCheckedEvents(),
+                    lat:      document.getElementById('lat').value,
+                    lon:      document.getElementById('lon').value,
                     role:     document.getElementById('role').value.trim(),
                     area:     document.getElementById('area').value.trim(),
                     linkedin: document.getElementById('linkedin').value.trim(),

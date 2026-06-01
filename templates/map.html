@@ -241,6 +241,12 @@
         return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
+    function safeUrl(url) {
+        const s = String(url || '').trim();
+        if (!s) return '';
+        return /^https?:\/\//i.test(s) ? s : 'https://' + s;
+    }
+
     function saveCurrentView() {
         savedView.center = map.getCenter();
         savedView.zoom   = map.getZoom();
@@ -265,7 +271,7 @@
                     ${p.event   ? `<span style="font-size:12px;color:#555"><b>Event:</b> ${esc(p.event)}</span><br/>` : ''}
                     ${p.role    ? `<span style="font-size:12px;color:#555"><b>Role:</b> ${esc(p.role)}</span><br/>` : ''}
                     ${p.area    ? `<span style="font-size:12px;color:#555"><b>Area:</b> ${esc(p.area)}</span><br/>` : ''}
-                    ${p.linkedin ? `<a href="${esc(p.linkedin)}" target="_blank" rel="noopener noreferrer" style="font-size:12px">LinkedIn</a><br/>` : ''}
+                    ${p.linkedin ? `<a href="${safeUrl(p.linkedin)}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#0a66c2;font-weight:600">🔗 LinkedIn</a><br/>` : ''}
                     <span style="font-size:11px;color:${p.working_event ? '#27ae60' : '#e74c3c'};font-weight:600;margin-top:4px;display:inline-block">
                         ${p.working_event ? '● Currently working' : '● Not currently working in sport events'}
                     </span><br/>
