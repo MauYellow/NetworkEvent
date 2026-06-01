@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Events – Event Network{% endblock %}
+
+{% block head %}
+<style>
+    .page-header {
+        background: white;
+        padding: 24px 28px;
+        border-bottom: 1px solid #DDD5C8;
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+    }
+    .page-header h1 { font-size: 22px; font-weight: 700; color: #1a2410; }
+    .page-header .count { font-size: 13px; color: #888; }
+
+    .events-toolbar {
+        padding: 14px 28px;
+        background: white;
+        border-bottom: 1px solid #DDD5C8;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .filter-select {
+        padding: 7px 12px;
+        font-size: 13px;
+        border: 1px solid #dde1e9;
+        border-radius: 7px;
+        background: white;
+        color: #333;
+        outline: none;
+        cursor: pointer;
+    }
+    .filter-select:focus { border-color: #4A7C59; }
+
+    .events-grid {
+        padding: 24px 28px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+        align-items: start;
+    }
+
+    .event-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        border: 1px solid #DDD5C8;
+        transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .event-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.09); transform: translateY(-1px); }
+
+    .event-card-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 10px;
+        line-height: 1.3;
+    }
+
+    .event-type-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #E8F0E8;
+        color: #3D5A3E;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+    }
+
+    .event-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .event-meta-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: 13px;
+        color: #555;
+    }
+    .event-meta-row .icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+    .event-meta-row .label { color: #999; min-width: 54px; font-size: 12px; }
+    .event-meta-row .value { color: #333; }
+
+    .event-dates {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #EDE8E0;
+        display: flex;
+        gap: 14px;
+        font-size: 12px;
+        color: #888;
+    }
+    .event-dates span strong { color: #555; display: block; font-size: 11px; }
+
+    .loading { text-align: center; padding: 60px 20px; color: #888; font-size: 15px; }
+    .empty   { text-align: center; padding: 60px 20px; color: #aaa; font-size: 15px; }
+    .error   { text-align: center; padding: 60px 20px; color: #e74c3c; font-size: 14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Events</h1>
+    <span class="count" id="eventsCount"></span>
+</div>
+<div class="events-toolbar">
+    <select class="filter-select" id="filterContinent" onchange="applyFilters()">
+        <option value="">All continents</option>
+    </select>
+    <select class="filter-select" id="filterType" onchange="applyFilters()">
+        <option value="">All types</option>
+    </select>
+</div>
+<div class="events-grid" id="eventsGrid">
+    <div class="loading" style="grid-column:1/-1">Loading events…</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let allEvents = [];
+
+    function esc(val) {
+        if (val === null || val === undefined) return '';
+        const d = document.createElement('div');
+        d.appendChild(document.createTextNode(Array.isArray(val) ? val.join(', ') : String(val)));
+        return d.innerHTML;
+    }
+
+    function renderCard(fields) {
+        const name      = fields.Event_name      || 'Unnamed event';
+        const city      = fields.Event_city      || '';
+        const region    = fields.Event_region    || '';
+        const continent = fields.Event_continent || '';
+        const type      = fields.Event_type      || '';
+        const start     = fields.Event_starting_date || '';
+        const end       = fields.Event_ending_date   || '';
+        const days      = fields.Event_days;
+
+        const location = [city, region].filter(Boolean).join(', ');
+
+        return `<div class="event-card">
+            <div class="event-card-name">${esc(name)}</div>
+            ${type ? `<span class="event-type-badge">${esc(type)}</span>` : ''}
+            <div class="event-meta">
+                ${location    ? `<div class="event-meta-row"><span class="icon">📍</span><span class="label">Location</span><span class="value">${esc(location)}</span></div>` : ''}
+                ${continent   ? `<div class="event-meta-row"><span class="icon">🌍</span><span class="label">Continent</span><span class="value">${esc(continent)}</span></div>` : ''}
+                ${days != null ? `<div class="event-meta-row"><span class="icon">📆</span><span class="label">Duration</span><span class="value">${esc(days)} days</span></div>` : ''}
+            </div>
+            ${(start || end) ? `
+            <div class="event-dates">
+                ${start ? `<span><strong>Start</strong>${esc(start)}</span>` : ''}
+                ${end   ? `<span><strong>End</strong>${esc(end)}</span>`   : ''}
+            </div>` : ''}
+        </div>`;
+    }
+
+    function populateFilters(events) {
+        const continents = [...new Set(events.map(e => e.fields.Event_continent).filter(Boolean))].sort();
+        const types      = [...new Set(events.map(e => e.fields.Event_type).filter(Boolean))].sort();
+
+        const fc = document.getElementById('filterContinent');
+        continents.forEach(c => {
+            const o = document.createElement('option'); o.value = c; o.textContent = c; fc.appendChild(o);
+        });
+
+        const ft = document.getElementById('filterType');
+        types.forEach(t => {
+            const o = document.createElement('option'); o.value = t; o.textContent = t; ft.appendChild(o);
+        });
+    }
+
+    function applyFilters() {
+        const continent = document.getElementById('filterContinent').value;
+        const type      = document.getElementById('filterType').value;
+
+        const filtered = allEvents.filter(({ fields }) => {
+            if (continent && fields.Event_continent !== continent) return false;
+            if (type      && fields.Event_type      !== type)      return false;
+            return true;
+        });
+
+        renderGrid(filtered);
+    }
+
+    function renderGrid(events) {
+        const grid     = document.getElementById('eventsGrid');
+        const countEl  = document.getElementById('eventsCount');
+        countEl.textContent = `${events.length} event${events.length !== 1 ? 's' : ''}`;
+
+        if (!events.length) {
+            grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No events match the selected filters.</div>';
+            return;
+        }
+        grid.innerHTML = events.map(({ fields }) => renderCard(fields)).join('');
+    }
+
+    async function loadEvents() {
+        const grid = document.getElementById('eventsGrid');
+        try {
+            const res = await fetch('/api/events');
+            if (res.status === 401) { window.location.href = '/login'; return; }
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            allEvents = await res.json();
+
+            if (!allEvents.length) {
+                grid.innerHTML = '<div class="empty" style="grid-column:1/-1">No events found.</div>';
+                return;
+            }
+
+            populateFilters(allEvents);
+            renderGrid(allEvents);
+        } catch (err) {
+            grid.innerHTML = `<div class="error" style="grid-column:1/-1">Error loading events: ${esc(err.message)}</div>`;
+        }
+    }
+
+    loadEvents();
+</script>
+{% endblock %}

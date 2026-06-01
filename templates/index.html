@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Network Map</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="https://img.icons8.com/emoji/48/globe-showing-asia-australia-emoji.png">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            padding: 10px;
+            background: #111;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: none;
+        }
+
+        #map {
+            flex: 1;
+            width: 100%;
+        }
+
+        .info {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        @media (min-width: 768px) {
+            header {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            select {
+                width: 300px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <h3 style="margin:0;">Event Network Map</h3>
+            <div class="info">Filtra per evento Airtable</div>
+        </div>
+
+        <select id="eventFilter">
+            <option value="all">Tutti gli eventi</option>
+        </select>
+    </header>
+
+    <div id="map"></div>
+
+    <!-- Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // ---------------- MAP INIT ----------------
+        const map = L.map('map').setView([20, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        // ---------------- STATE ----------------
+        let allData = [];
+        let markers = [];
+
+        let savedView = {
+            center: null,
+            zoom: null
+        };
+
+        const dropdown = document.getElementById("eventFilter");
+
+        // ---------------- VIEW SAVE ----------------
+        function saveCurrentView() {
+            savedView.center = map.getCenter();
+            savedView.zoom = map.getZoom();
+        }
+
+        // ---------------- MARKERS ----------------
+        function clearMarkers() {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+        }
+
+        function renderMarkers(data, restoreView = true) {
+            clearMarkers();
+
+            data.forEach(p => {
+                if (!p.lat || !p.lon) return;
+
+                const marker = L.marker([p.lat, p.lon]).addTo(map);
+
+                marker.bindPopup(`
+          <b>${p.name || "No name"}</b><br/>
+          <b>Event:</b> ${p.event || "-"}<br/>
+          <b>Role:</b> ${p.role || "-"}<br/>
+          <b>Area:</b> ${p.area || "-"}<br/>
+          ${p.linkedin
+                        ? `<a href="${p.linkedin}" target="_blank" rel="noopener noreferrer">LinkedIn</a>`
+                        : ""
+                    }
+        `);
+
+                markers.push(marker);
+            });
+
+            // 🔒 NON cambiare zoom quando si filtra
+            if (restoreView && savedView.center && savedView.zoom) {
+                map.setView(savedView.center, savedView.zoom);
+            }
+        }
+
+        // ---------------- FILTER ----------------
+        function populateFilter(data) {
+            const events = [...new Set(data.map(p => p.event).filter(Boolean))];
+
+            events.forEach(ev => {
+                const option = document.createElement("option");
+                option.value = ev;
+                option.textContent = ev;
+                dropdown.appendChild(option);
+            });
+        }
+
+        function applyFilter() {
+            saveCurrentView();
+
+            const value = dropdown.value;
+
+            if (value === "all") {
+                renderMarkers(allData, true);
+            } else {
+                renderMarkers(
+                    allData.filter(p => p.event === value),
+                    true
+                );
+            }
+        }
+
+        dropdown.addEventListener("change", applyFilter);
+
+        // ---------------- LOAD DATA ----------------
+        async function loadData() {
+            try {
+                const res = await fetch("/api/points");
+                allData = await res.json();
+
+                populateFilter(allData);
+                renderMarkers(allData, false);
+
+                saveCurrentView();
+
+            } catch (err) {
+                console.error("Error loading data:", err);
+            }
+        }
+
+        loadData();
+    </script>
+
+</body>
+
+</html>

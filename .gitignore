@@ -1,0 +1,43 @@
+
+# Python virtual environment directories
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+
+# Virtualenv created by python -m venv or virtualenv
+*/venv/
+*/env/
+
+# Pipenv virtualenv
+\.venv/
+
+# dotenv file with environment variables
+.env
+
+# Local user data (contains password hashes and Airtable IDs)
+users_auth.json
+profile.json
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+eggs/
+*.egg-info/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Pytest cache
+.pytest_cache/
+
+# IDEs
+.vscode/
+.idea/

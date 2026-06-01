@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\mauri\\\\Maurizio Personale\\\\Python\\\\EventNetwork\" | Where-Object { $_.Name -ne 'venv' } | Select-Object Name)",
+      "Bash(venv/Scripts/python.exe -c \"import flask; print\\('flask ok', flask.__version__\\)\")",
+      "Bash(venv/Scripts/python.exe -c \"import requests, dotenv; print\\('deps ok'\\)\")",
+      "Bash(venv/Scripts/python.exe -c ' *)",
+      "WebFetch(domain:sports-event-network.taplink.site)",
+      "Bash(curl -s \"https://sports-event-network.taplink.site/\" -H \"User-Agent: Mozilla/5.0\")"
+    ]
+  }
+}
