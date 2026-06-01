@@ -1,0 +1,6 @@
+flask>=3.1
+requests>=2.34
+python-dotenv>=1.2
+werkzeug>=3.1
+gunicorn>=23.0
+urllib3>=2.0
