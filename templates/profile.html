@@ -887,10 +887,7 @@
         try {
             const res = await fetch('/api/delete-account', { method: 'POST' });
             if (!res.ok) throw new Error('Server error');
-            closeDeleteModal();
-            showModal('✅', 'Account deleted', 'Your account and all associated data have been permanently deleted.', () => {
-                window.location.href = '/login';
-            });
+            window.location.href = '/login';
         } catch {
             btn.disabled = false;
             btn.textContent = 'Delete permanently';

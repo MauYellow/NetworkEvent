@@ -10,6 +10,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { height: 100%; font-family: 'Segoe UI', Arial, sans-serif; }
 
+        /* ── Desktop layout ── */
         .layout { display: flex; height: 100vh; }
 
         .sidebar {
@@ -19,6 +20,8 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
+            transition: transform 0.25s ease;
+            z-index: 200;
         }
 
         .sidebar-logo {
@@ -34,15 +37,13 @@
             gap: 10px;
         }
         .sidebar-logo img {
-            width: 36px;
-            height: 36px;
+            width: 36px; height: 36px;
             border-radius: 50%;
             flex-shrink: 0;
             object-fit: cover;
         }
 
         .sidebar-nav { padding-top: 8px; }
-
         .sidebar-nav a {
             display: flex;
             align-items: center;
@@ -54,7 +55,7 @@
             transition: all 0.15s;
             border-left: 3px solid transparent;
         }
-        .sidebar-nav a:hover { background: #243524; color: #c8e6c8; }
+        .sidebar-nav a:hover  { background: #243524; color: #c8e6c8; }
         .sidebar-nav a.active { background: #253525; color: #fff; border-left-color: #4A7C59; }
         .sidebar-nav svg { width: 18px; height: 18px; flex-shrink: 0; }
 
@@ -66,17 +67,13 @@
         }
         .content.map-mode { overflow: hidden; }
 
-        /* Sidebar user footer */
+        /* Sidebar footer */
         .sidebar-footer {
             margin-top: auto;
             padding: 14px 16px;
             border-top: 1px solid #253525;
         }
-        .sidebar-user {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .sidebar-user { display: flex; align-items: center; gap: 10px; }
         .sidebar-avatar {
             width: 32px; height: 32px;
             border-radius: 50%;
@@ -91,54 +88,143 @@
         }
         .sidebar-user-info { min-width: 0; }
         .sidebar-user-name {
-            font-size: 13px;
-            color: #ddd;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 13px; color: #ddd; font-weight: 600;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .sidebar-logout {
-            font-size: 11px;
-            color: #6a8a6a;
-            text-decoration: none;
+            font-size: 11px; color: #6a8a6a; text-decoration: none;
             transition: color 0.15s;
         }
         .sidebar-logout:hover { color: #e74c3c; }
         .sidebar-signin {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            display: flex; align-items: center; gap: 8px;
             padding: 9px 12px;
-            background: #1e311e;
-            border: 1px solid #2e4a2e;
-            border-radius: 8px;
-            color: #7a9a7a;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
-            transition: background 0.15s, color 0.15s;
-            width: 100%;
+            background: #1e311e; border: 1px solid #2e4a2e;
+            border-radius: 8px; color: #7a9a7a;
+            text-decoration: none; font-size: 13px; font-weight: 600;
+            transition: background 0.15s, color 0.15s; width: 100%;
         }
         .sidebar-signin:hover { background: #253525; color: #c8e6c8; }
+
+        /* ── Mobile topbar ── */
+        .topbar {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 52px;
+            background: #1a2b1a;
+            z-index: 300;
+            align-items: center;
+            padding: 0 16px;
+            gap: 12px;
+            border-bottom: 1px solid #253525;
+        }
+        .topbar-logo {
+            display: flex; align-items: center; gap: 9px;
+            color: #fff; font-size: 13px; font-weight: 700;
+            text-decoration: none; flex: 1;
+        }
+        .topbar-logo img {
+            width: 30px; height: 30px;
+            border-radius: 50%; object-fit: cover;
+        }
+        .hamburger {
+            background: none; border: none;
+            cursor: pointer; padding: 6px;
+            display: flex; flex-direction: column;
+            gap: 5px; flex-shrink: 0;
+        }
+        .hamburger span {
+            display: block; width: 22px; height: 2px;
+            background: #c8e6c8; border-radius: 2px;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+        .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* ── Overlay (mobile) ── */
+        .sidebar-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 199;
+            backdrop-filter: blur(2px);
+        }
+        .sidebar-overlay.visible { display: block; }
+
+        /* ── Close button inside sidebar (mobile only) ── */
+        .sidebar-close {
+            display: none;
+            position: absolute; top: 12px; right: 12px;
+            background: none; border: none;
+            color: #7a9a7a; font-size: 22px;
+            cursor: pointer; line-height: 1;
+            padding: 4px;
+        }
+
+        /* ── Mobile responsive ── */
+        @media (max-width: 768px) {
+            .topbar { display: flex; }
+
+            .layout { flex-direction: column; padding-top: 52px; }
+
+            .sidebar {
+                position: fixed;
+                top: 0; left: 0;
+                width: 260px;
+                height: 100vh;
+                transform: translateX(-100%);
+                z-index: 300;
+            }
+            .sidebar.open { transform: translateX(0); }
+
+            .sidebar-close { display: block; }
+
+            .content { height: calc(100vh - 52px); }
+
+            /* Wider sidebar logo on mobile */
+            .sidebar-logo { padding: 14px 16px 14px 20px; }
+        }
     </style>
 </head>
 <body>
+
+<!-- ── Mobile topbar ── -->
+<div class="topbar">
+    <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
+    <a href="/" class="topbar-logo">
+        <img src="/assets/img/logo.jpg" alt="Sport Events Network">
+        Sport Events Network
+    </a>
+    {% if session.get('user_name') %}
+    <div style="width:28px;height:28px;border-radius:50%;background:#4A7C59;color:white;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        {{ session.user_name[0] | upper }}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ── Overlay ── -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <div class="layout">
-    <nav class="sidebar">
+    <nav class="sidebar" id="sidebar">
+        <button class="sidebar-close" onclick="closeSidebar()" aria-label="Close menu">✕</button>
         <div class="sidebar-logo">
             <img src="/assets/img/logo.jpg" alt="Sport Events Network">
             Sport Events Network
         </div>
         <div class="sidebar-nav">
-            <a href="/" {% if active_page == 'map' %}class="active"{% endif %}>
+            <a href="/" {% if active_page == 'map' %}class="active"{% endif %} onclick="closeSidebar()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
                     <circle cx="12" cy="9" r="2.5"/>
                 </svg>
                 Map
             </a>
-            <a href="/events" {% if active_page == 'events' %}class="active"{% endif %}>
+            <a href="/events" {% if active_page == 'events' %}class="active"{% endif %} onclick="closeSidebar()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="4" width="18" height="18" rx="2"/>
                     <line x1="16" y1="2" x2="16" y2="6"/>
@@ -147,7 +233,7 @@
                 </svg>
                 Events
             </a>
-            <a href="/profile" {% if active_page == 'profile' %}class="active"{% endif %}>
+            <a href="/profile" {% if active_page == 'profile' %}class="active"{% endif %} onclick="closeSidebar()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                     <circle cx="12" cy="7" r="4"/>
@@ -165,7 +251,7 @@
                 </div>
             </div>
             {% else %}
-            <a href="/login" class="sidebar-signin">
+            <a href="/login" class="sidebar-signin" onclick="closeSidebar()">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
                     <polyline points="10 17 15 12 10 7"/>
@@ -176,10 +262,36 @@
             {% endif %}
         </div>
     </nav>
+
     <div class="content {% block content_class %}{% endblock %}">
         {% block content %}{% endblock %}
     </div>
 </div>
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const btn     = document.getElementById('hamburgerBtn');
+        const isOpen  = sidebar.classList.toggle('open');
+        overlay.classList.toggle('visible', isOpen);
+        btn.classList.toggle('open', isOpen);
+        document.body.style.overflow = isOpen ? 'hidden' : '';
+    }
+
+    function closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('visible');
+        document.getElementById('hamburgerBtn').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    // Close on resize back to desktop
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) closeSidebar();
+    });
+</script>
+
 {% block scripts %}{% endblock %}
 </body>
 </html>
