@@ -398,6 +398,19 @@
         border-radius: 6px;
         border: 1px solid #fecaca;
     }
+
+    @media (max-width: 768px) {
+        .profile-wrap { padding: 14px; }
+        .profile-top,
+        .profile-bottom { grid-template-columns: 1fr; gap: 14px; }
+        .form-two { grid-template-columns: 1fr; gap: 10px; }
+        .save-area { align-items: stretch; }
+        .save-row { flex-wrap: wrap; gap: 8px; }
+        .save-row .btn-primary { width: 100%; text-align: center; }
+        /* GDPR + save stacks in single column already via flex-direction:column */
+        /* The right column div needs to lose its fixed styles */
+        .profile-bottom > div:last-child { width: 100%; }
+    }
 </style>
 {% endblock %}
 

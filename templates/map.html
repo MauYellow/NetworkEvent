@@ -7,17 +7,25 @@
 {% block head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
-    .map-toolbar {
+    /* Map outer wrapper fills content area */
+    .map-outer {
         position: absolute;
-        top: 0; left: 0; right: 0;
-        z-index: 1000;
-        background: rgba(26, 43, 26, 0.92);
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .map-toolbar {
+        flex-shrink: 0;
+        background: rgba(26, 43, 26, 0.97);
         backdrop-filter: blur(6px);
         padding: 10px 16px;
         display: flex;
         align-items: center;
-        gap: 14px;
+        flex-wrap: wrap;
+        gap: 10px;
         color: white;
+        z-index: 1000;
     }
     .map-toolbar h3 { font-size: 14px; font-weight: 600; white-space: nowrap; }
     .map-toolbar select {
@@ -102,7 +110,7 @@
     }
     .btn-toolbar-logout:hover { border-color: #e74c3c; color: #e74c3c; }
 
-    #map { position: absolute; inset: 0; }
+    #map { flex: 1; position: relative; min-height: 0; }
 
     /* Flag row inside popup */
     .flag-row {
@@ -175,10 +183,27 @@
         pointer-events: none;
         z-index: 9999;
     }
+
+    @media (max-width: 768px) {
+        .map-toolbar {
+            padding: 8px 12px;
+            gap: 8px;
+        }
+        /* Stack filters in two rows */
+        .map-toolbar h3 { width: 100%; margin-bottom: 2px; font-size: 13px; }
+        .map-toolbar select { flex: 1; min-width: 120px; font-size: 12px; }
+        .map-toolbar .count { order: 3; font-size: 11px; }
+        .legend-item { font-size: 11px; }
+        /* User section goes full width on its own row */
+        .toolbar-right { width: 100%; margin-left: 0; border-top: 1px solid #2d3d2d; padding-top: 8px; }
+        .toolbar-user-name { font-size: 12px; }
+        .btn-accedi { font-size: 10px; padding: 6px 14px; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="map-outer">
 <div class="map-toolbar">
     <h3>Workers by event</h3>
     <select id="eventFilter">
@@ -206,6 +231,7 @@
     </div>
 </div>
 <div id="map"></div>
+</div>
 {% endblock %}
 
 {% block scripts %}
