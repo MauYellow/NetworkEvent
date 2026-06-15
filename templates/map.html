@@ -231,6 +231,9 @@
     </div>
 </div>
 <div id="map"></div>
+<div id="noLocationDisclaimer" style="display:none;position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(26,43,26,0.93);color:#c8e6c8;font-size:13px;padding:11px 20px;border-radius:9px;z-index:500;text-align:center;max-width:88%;pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,0.35);line-height:1.5">
+    Some colleagues may be working on this event but chose not to share their location
+</div>
 </div>
 {% endblock %}
 
@@ -262,21 +265,6 @@
         shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
         iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
     });
-    const notWorkingIcon = L.divIcon({
-        className: '',
-        html: '<div style="position:relative;width:25px;height:41px">' +
-              '<span style="position:absolute;bottom:43px;left:50%;transform:translateX(-50%);' +
-              'background:#c0392b;color:#fff;font-size:9px;font-weight:700;' +
-              'padding:2px 6px;border-radius:3px;white-space:nowrap;' +
-              'box-shadow:0 1px 3px rgba(0,0,0,0.4);pointer-events:none;line-height:1.4">' +
-              'Not working</span>' +
-              '<img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png" ' +
-              'width="25" height="41">' +
-              '</div>',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34]
-    });
 
     function esc(str) {
         return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -304,7 +292,7 @@
             if (!p.lat || !p.lon) return;
             const rid   = esc(p.record_id || '');
             const flags = p.flags || 0;
-            const icon  = p.working_event ? greenIcon : (p.event ? notWorkingIcon : redIcon);
+            const icon  = p.working_event ? greenIcon : redIcon;
             const marker = L.marker([p.lat, p.lon], { icon }).addTo(map);
             marker.bindPopup(`
                 <div style="min-width:180px">
@@ -314,7 +302,7 @@
                     ${p.area    ? `<span style="font-size:12px;color:#555"><b>Area:</b> ${esc(p.area)}</span><br/>` : ''}
                     ${p.linkedin
                         ? `<a href="${safeUrl(p.linkedin)}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:#0a66c2;font-weight:600">🔗 LinkedIn</a><br/>`
-                        : `<span style="font-size:12px;color:#aaa;font-style:italic">The user chose not to share this info</span><br/>`}
+                        : `<span style="font-size:12px;color:#aaa;font-style:italic">The user chose not to share the Linkedin profile</span><br/>`}
                     <span style="font-size:11px;color:${p.working_event ? '#27ae60' : '#e74c3c'};font-weight:600;margin-top:4px;display:inline-block">
                         ${p.working_event ? '● Currently working' : '● Not currently working in sport events'}
                     </span><br/>
@@ -333,6 +321,12 @@
         }
         const visible = data.filter(p => p.lat && p.lon).length;
         countEl.textContent = `${visible} person${visible !== 1 ? 's' : ''}`;
+
+        const disclaimer = document.getElementById('noLocationDisclaimer');
+        if (disclaimer) {
+            const eventFiltered = dropdown.value !== 'all';
+            disclaimer.style.display = (eventFiltered && visible === 0 && data.length > 0) ? 'block' : 'none';
+        }
     }
 
     function populateFilter(data) {
