@@ -56,7 +56,8 @@
     input[type="text"],
     input[type="email"],
     input[type="url"],
-    input[type="password"] {
+    input[type="password"],
+    select {
         width: 100%;
         padding: 9px 12px;
         font-size: 14px;
@@ -67,7 +68,7 @@
         background: white;
         transition: border-color 0.15s, box-shadow 0.15s;
     }
-    input:focus {
+    input:focus, select:focus {
         border-color: #4A7C59;
         box-shadow: 0 0 0 3px rgba(74,124,89,0.12);
     }
@@ -355,11 +356,19 @@
             </div>
             <div class="form-row">
                 <label for="role">Role</label>
-                <input type="text" id="role" placeholder="e.g. Operations Manager" />
+                <select id="role">
+                    <option value="">— Select your role —</option>
+                    <option value="Head of FA">Head of FA</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Deputy Manager">Deputy Manager</option>
+                    <option value="Coordinator">Coordinator</option>
+                    <option value="Specialist">Specialist</option>
+                </select>
             </div>
             <div class="form-row">
                 <label for="area">Functional Area</label>
-                <input type="text" id="area" placeholder="e.g. Engineering, Product, Operations…" />
+                <input type="text" id="area" placeholder="e.g. Venue Management, Catering, Transport…" />
+                <div style="font-size:11px;color:#999;margin-top:5px">Please avoid acronyms — writing the full name will help colleagues find you more easily.</div>
             </div>
             <div class="form-row">
                 <label for="linkedin">LinkedIn</label>
@@ -372,25 +381,32 @@
             <div class="form-section-title">Sport Events</div>
             <div class="toggle-row">
                 <label class="toggle">
-                    <input type="checkbox" id="sportActive" onchange="onSportToggle()">
+                    <input type="checkbox" id="everWorked" onchange="onEverWorkedToggle()">
                     <span class="toggle-slider"></span>
                 </label>
-                <span class="toggle-label">Currently working in Sport Events</span>
-                <span class="toggle-state" id="sportStateLabel">No</span>
+                <span class="toggle-label">Have you ever worked in Sport Events? <span style="font-size:11px;color:#aaa;font-weight:400">(paid staff only)</span></span>
+                <span class="toggle-state" id="everWorkedStateLabel">No</span>
             </div>
 
             <div id="sportPanel">
-                <div class="form-row" style="margin-bottom:0">
-                    <label>Select the event you are currently working on <span style="color:#e74c3c">*</span></label>
+                <div style="margin-top:16px;padding:12px 14px;background:#f0f7f0;border-radius:8px;border:1px solid #c8e6c8">
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;font-size:14px;font-weight:600;color:#1a2410">
+                        <input type="checkbox" id="currentlyWorking" style="width:16px;height:16px;accent-color:#4A7C59;cursor:pointer;flex-shrink:0">
+                        Currently working in Sport Events
+                    </label>
+                </div>
+
+                <div class="form-row" style="margin-bottom:0;margin-top:16px">
+                    <label>Select the event you are / were working on <span style="color:#e74c3c">*</span></label>
                     <div class="events-checklist" id="eventsChecklist" style="transition:border-color 0.15s">
                         <div class="events-loading">Loading…</div>
                     </div>
-                    <div id="eventError" style="display:none;font-size:12px;color:#e74c3c;margin-top:5px">⚠ Please select the event you are working on.</div>
+                    <div id="eventError" style="display:none;font-size:12px;color:#e74c3c;margin-top:5px">⚠ Please select the event.</div>
                 </div>
 
                 <div class="location-section">
-                    <label style="margin-bottom:4px">Your current working location <span style="color:#e74c3c">*</span></label>
-                    <p>Click on the map to drop a pin in the city of the event.</p>
+                    <label style="margin-bottom:4px">Your current working or last working location</label>
+                    <p>Click on the map to drop a pin in the city of the event. Make sure your location is updated, this will help others to connect with you.</p>
                     <div id="locationMap" style="transition:border-color 0.15s"></div>
                     <div class="location-coords" id="coordsDisplay"></div>
                     <input type="hidden" id="lat" />
@@ -462,6 +478,21 @@
         <div class="modal-title" id="modalTitle"></div>
         <div class="modal-msg"   id="modalMsg"></div>
         <button class="btn-primary" id="modalBtn" onclick="closeModal()">OK</button>
+    </div>
+</div>
+
+<!-- ── Location warning modal ── -->
+<div id="locationWarnModal" class="modal-overlay" style="display:none">
+    <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px">
+        <div class="modal-icon">📍</div>
+        <div class="modal-title" style="font-size:17px">No location set</div>
+        <div class="modal-msg">
+            You haven't set your current or last working location on the map, so you are choosing not to be visible on the map. Would you like to continue anyway?
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button class="btn-secondary" onclick="closeLocationWarnModal()" style="flex:1;min-width:130px">No, add location</button>
+            <button class="btn-primary"   onclick="confirmAndRegister()"      style="flex:1;min-width:130px">Yes, continue</button>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -571,10 +602,10 @@
     // ── Sport events toggle ───────────────────────────────────────────────────
     let eventsLoaded = false;
 
-    function onSportToggle() {
-        const active = document.getElementById('sportActive').checked;
-        document.getElementById('sportStateLabel').textContent = active ? 'Yes' : 'No';
-        document.getElementById('sportPanel').style.display   = active ? 'block' : 'none';
+    function onEverWorkedToggle() {
+        const active = document.getElementById('everWorked').checked;
+        document.getElementById('everWorkedStateLabel').textContent = active ? 'Yes' : 'No';
+        document.getElementById('sportPanel').style.display = active ? 'block' : 'none';
 
         if (active) {
             if (!eventsLoaded) fetchEvents();
@@ -653,7 +684,10 @@
             return;
         }
 
-        if (document.getElementById('sportActive').checked) {
+        const everWorked      = document.getElementById('everWorked').checked;
+        const currentlyWorking = document.getElementById('currentlyWorking').checked;
+
+        if (everWorked) {
             const events      = getCheckedEvents();
             const lat         = document.getElementById('lat').value;
             const lon         = document.getElementById('lon').value;
@@ -664,15 +698,15 @@
             let sportValid    = true;
 
             if (!events.length) {
-                eventErr.style.display  = 'block';
+                eventErr.style.display      = 'block';
                 checklist.style.borderColor = '#e74c3c';
                 sportValid = false;
             } else {
-                eventErr.style.display  = 'none';
+                eventErr.style.display      = 'none';
                 checklist.style.borderColor = '';
             }
 
-            if (!lat || !lon) {
+            if (currentlyWorking && (!lat || !lon)) {
                 locationErr.style.display = 'block';
                 mapEl.style.borderColor   = '#e74c3c';
                 sportValid = false;
@@ -686,11 +720,39 @@
                 first.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
+
+            // Validation passed — warn if no location set
+            const lat = document.getElementById('lat').value;
+            const lon = document.getElementById('lon').value;
+            if (!lat || !lon) {
+                document.getElementById('locationWarnModal').style.display = 'flex';
+                return;
+            }
         }
+
+        await submitRegistration();
+    }
+
+    function closeLocationWarnModal() {
+        document.getElementById('locationWarnModal').style.display = 'none';
+    }
+
+    async function confirmAndRegister() {
+        closeLocationWarnModal();
+        await submitRegistration();
+    }
+
+    async function submitRegistration() {
+        const fname = document.getElementById('fname').value.trim();
+        const lname = document.getElementById('lname').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const pwd   = document.getElementById('regPwd').value;
+        const everWorked       = document.getElementById('everWorked').checked;
+        const currentlyWorking = document.getElementById('currentlyWorking').checked;
 
         const btn    = document.getElementById('registerBtn');
         const status = document.getElementById('regStatus');
-        btn.disabled     = true;
+        btn.disabled       = true;
         status.textContent = 'Creating account…';
         status.className   = 'status-msg';
 
@@ -700,11 +762,11 @@
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({
                     fname, lname, email, password: pwd,
-                    sport_active: document.getElementById('sportActive').checked,
-                    events:   getCheckedEvents(),
+                    sport_active: currentlyWorking,
+                    events:   everWorked ? getCheckedEvents() : [],
                     lat:      document.getElementById('lat').value,
                     lon:      document.getElementById('lon').value,
-                    role:     document.getElementById('role').value.trim(),
+                    role:     document.getElementById('role').value,
                     area:     document.getElementById('area').value.trim(),
                     linkedin: document.getElementById('linkedin').value.trim(),
                 }),
@@ -716,7 +778,7 @@
             } else {
                 showModal(
                     '✅', 'Welcome to the Network!',
-                    `Your account has been created. Sign in with your email and password to access the platform.`,
+                    'Your account has been created. Sign in with your email and password to access the platform.',
                     () => { window.location.href = '/login'; }
                 );
                 status.textContent = '';

@@ -58,7 +58,8 @@
     input[type="text"],
     input[type="email"],
     input[type="url"],
-    input[type="password"] {
+    input[type="password"],
+    select {
         width: 100%;
         padding: 9px 12px;
         font-size: 14px;
@@ -69,7 +70,7 @@
         background: white;
         transition: border-color 0.15s, box-shadow 0.15s;
     }
-    input:focus {
+    input:focus, select:focus {
         border-color: #4A7C59;
         box-shadow: 0 0 0 3px rgba(74,124,89,0.12);
     }
@@ -444,11 +445,19 @@
             </div>
             <div class="form-row">
                 <label for="role">Role</label>
-                <input type="text" id="role" placeholder="e.g. Software Engineer" />
+                <select id="role">
+                    <option value="">— Select your role —</option>
+                    <option value="Head of FA">Head of FA</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Deputy Manager">Deputy Manager</option>
+                    <option value="Coordinator">Coordinator</option>
+                    <option value="Specialist">Specialist</option>
+                </select>
             </div>
             <div class="form-row">
                 <label for="area">Functional Area</label>
-                <input type="text" id="area" placeholder="e.g. Engineering, Product, Operations…" />
+                <input type="text" id="area" placeholder="e.g. Venue Management, Catering, Transport…" />
+                <div style="font-size:11px;color:#999;margin-top:5px">Please avoid acronyms — writing the full name will help colleagues find you more easily.</div>
             </div>
             <div class="form-row">
                 <label for="linkedin">LinkedIn</label>
@@ -461,24 +470,31 @@
             <div class="form-section-title">Sport Events</div>
             <div class="toggle-row">
                 <label class="toggle">
-                    <input type="checkbox" id="sportActive" onchange="onSportToggle()">
+                    <input type="checkbox" id="everWorked" onchange="onEverWorkedToggle()">
                     <span class="toggle-slider"></span>
                 </label>
-                <span class="toggle-label">Currently working in Sport Events</span>
-                <span class="toggle-state" id="sportStateLabel">No</span>
+                <span class="toggle-label">Have you ever worked in Sport Events? <span style="font-size:11px;color:#aaa;font-weight:400">(paid staff only)</span></span>
+                <span class="toggle-state" id="everWorkedStateLabel">No</span>
             </div>
 
             <div id="sportPanel">
-                <div class="form-row" style="margin-bottom:0">
-                    <label>Select the event you are currently working on</label>
+                <div style="margin-top:16px;padding:12px 14px;background:#f0f7f0;border-radius:8px;border:1px solid #c8e6c8">
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;font-size:14px;font-weight:600;color:#1a2410">
+                        <input type="checkbox" id="currentlyWorking" style="width:16px;height:16px;accent-color:#4A7C59;cursor:pointer;flex-shrink:0">
+                        Currently working in Sport Events
+                    </label>
+                </div>
+
+                <div class="form-row" style="margin-bottom:0;margin-top:16px">
+                    <label>Select the event you are / were working on</label>
                     <div class="events-checklist" id="eventsChecklist">
                         <div class="events-loading">Loading…</div>
                     </div>
                 </div>
 
                 <div class="location-section">
-                    <label style="margin-bottom:4px">Your current working location</label>
-                    <p>Click on the map to drop a pin in the city of the event.</p>
+                    <label style="margin-bottom:4px">Your current working or last working location</label>
+                    <p>Click on the map to drop a pin in the city of the event. Make sure your location is updated, this will help others to connect with you.</p>
                     <div id="locationMap"></div>
                     <div class="location-coords" id="coordsDisplay"></div>
                     <input type="hidden" id="lat" />
@@ -663,10 +679,10 @@
     let pendingSavedLat = null;
     let pendingSavedLon = null;
 
-    function onSportToggle() {
-        const active = document.getElementById('sportActive').checked;
-        document.getElementById('sportStateLabel').textContent = active ? 'Yes' : 'No';
-        document.getElementById('sportPanel').style.display   = active ? 'block' : 'none';
+    function onEverWorkedToggle() {
+        const active = document.getElementById('everWorked').checked;
+        document.getElementById('everWorkedStateLabel').textContent = active ? 'Yes' : 'No';
+        document.getElementById('sportPanel').style.display = active ? 'block' : 'none';
 
         if (active) {
             if (!eventsLoaded) fetchEvents();
@@ -744,14 +760,19 @@
                 document.getElementById('gdprConsent').checked = true;
             }
 
-            if (data.sport_events_active) {
-                document.getElementById('sportActive').checked = true;
-                document.getElementById('sportStateLabel').textContent = 'Yes';
+            const hasEvents = data.sport_events_selected?.length > 0;
+            if (data.sport_events_active || hasEvents) {
+                document.getElementById('everWorked').checked = true;
+                document.getElementById('everWorkedStateLabel').textContent = 'Yes';
                 document.getElementById('sportPanel').style.display = 'block';
+
+                if (data.sport_events_active) {
+                    document.getElementById('currentlyWorking').checked = true;
+                }
 
                 await fetchEvents();
 
-                if (data.sport_events_selected?.length) {
+                if (hasEvents) {
                     document.querySelectorAll('#eventsChecklist input[name="event"]').forEach(cb => {
                         cb.checked = data.sport_events_selected.includes(cb.value);
                     });
@@ -783,8 +804,8 @@
         PROFILE_FIELDS.forEach(f => { payload[f] = document.getElementById(f)?.value || ''; });
         payload.lat                   = document.getElementById('lat').value;
         payload.lon                   = document.getElementById('lon').value;
-        payload.sport_events_active   = document.getElementById('sportActive').checked;
-        payload.sport_events_selected = getCheckedEvents();
+        payload.sport_events_active   = document.getElementById('currentlyWorking').checked;
+        payload.sport_events_selected = document.getElementById('everWorked').checked ? getCheckedEvents() : [];
         payload.gdpr_consent          = true;
 
         try {
