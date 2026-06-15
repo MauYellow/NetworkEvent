@@ -340,23 +340,27 @@
         <!-- LEFT: Personal Information -->
         <div class="form-section">
             <div class="form-section-title">Personal information</div>
+            <!-- Hidden dummy fields: absorb browser autofill before the real fields -->
+            <input type="text"     style="display:none" aria-hidden="true" />
+            <input type="email"    style="display:none" aria-hidden="true" />
+            <input type="password" style="display:none" aria-hidden="true" />
             <div class="form-two form-row">
                 <div style="margin-bottom:0">
                     <label for="fname">First name <span style="color:#e74c3c">*</span></label>
-                    <input type="text" id="fname" placeholder="Mario" />
+                    <input type="text" id="fname" placeholder="Mario" autocomplete="off" />
                 </div>
                 <div style="margin-bottom:0">
                     <label for="lname">Last name <span style="color:#e74c3c">*</span></label>
-                    <input type="text" id="lname" placeholder="Rossi" />
+                    <input type="text" id="lname" placeholder="Rossi" autocomplete="off" />
                 </div>
             </div>
             <div class="form-row">
                 <label for="email">Email <span style="color:#e74c3c">*</span></label>
-                <input type="email" id="email" placeholder="mario@example.com" />
+                <input type="email" id="email" placeholder="mario@example.com" autocomplete="off" />
             </div>
             <div class="form-row">
                 <label for="role">Role</label>
-                <select id="role">
+                <select id="role" autocomplete="off">
                     <option value="">— Select your role —</option>
                     <option value="Head of FA">Head of FA</option>
                     <option value="Manager">Manager</option>
@@ -367,12 +371,12 @@
             </div>
             <div class="form-row">
                 <label for="area">Functional Area</label>
-                <input type="text" id="area" placeholder="e.g. Venue Management, Catering, Transport…" />
+                <input type="text" id="area" placeholder="e.g. Venue Management, Catering, Transport…" autocomplete="off" />
                 <div style="font-size:11px;color:#999;margin-top:5px">Please avoid acronyms — writing the full name will help colleagues find you more easily.</div>
             </div>
             <div class="form-row">
                 <label for="linkedin">LinkedIn</label>
-                <input type="url" id="linkedin" placeholder="https://linkedin.com/in/…" />
+                <input type="url" id="linkedin" placeholder="https://linkedin.com/in/…" autocomplete="off" />
             </div>
         </div>
 

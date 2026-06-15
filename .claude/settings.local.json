@@ -13,7 +13,9 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(git -c http.sslVerify=false push origin main)"
+      "Bash(git -c http.sslVerify=false push origin main)",
+      "Bash(dir profile.json users_auth.json)",
+      "Bash(python *)"
     ]
   }
 }
