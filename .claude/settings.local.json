@@ -9,7 +9,11 @@
       "Bash(curl -s \"https://sports-event-network.taplink.site/\" -H \"User-Agent: Mozilla/5.0\")",
       "Bash(Select-Object Name)",
       "PowerShell(Get-ChildItem \"C:\\\\Users\\\\mauri\\\\Maurizio Personale\\\\Python\\\\EventNetwork\" | Where-Object { $_.Name -ne \"venv\" } | Select-Object Name)",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\mauri\\\\Maurizio Personale\\\\Python\\\\EventNetwork\" -Force | ForEach-Object { $_.Name })"
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\mauri\\\\Maurizio Personale\\\\Python\\\\EventNetwork\" -Force | ForEach-Object { $_.Name })",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git -c http.sslVerify=false push origin main)"
     ]
   }
 }
