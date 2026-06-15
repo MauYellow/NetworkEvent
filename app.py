@@ -222,6 +222,12 @@ def register():
     return render_template("register.html", active_page=None)
 
 
+@app.route("/colleagues")
+@login_required
+def colleagues():
+    return render_template("colleagues.html", active_page="colleagues")
+
+
 @app.route("/profile")
 @login_required
 def profile():

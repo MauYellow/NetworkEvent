@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Find Colleague – Event Network{% endblock %}
+
+{% block head %}
+<style>
+    .page-header {
+        background: white;
+        padding: 24px 28px;
+        border-bottom: 1px solid #DDD5C8;
+    }
+    .page-header h1 { font-size: 22px; font-weight: 700; color: #1a2410; }
+    .page-header p  { font-size: 13px; color: #888; margin-top: 4px; }
+
+    .colleagues-wrap { padding: 24px 28px; }
+
+    /* Filter bar */
+    .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 20px;
+        align-items: center;
+    }
+    .filter-bar input[type="text"],
+    .filter-bar select {
+        padding: 8px 12px;
+        font-size: 13px;
+        border: 1px solid #DDD5C8;
+        border-radius: 7px;
+        outline: none;
+        color: #333;
+        background: white;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        min-width: 160px;
+    }
+    .filter-bar input[type="text"] { flex: 1; min-width: 200px; }
+    .filter-bar input:focus,
+    .filter-bar select:focus {
+        border-color: #4A7C59;
+        box-shadow: 0 0 0 3px rgba(74,124,89,0.1);
+    }
+    .filter-bar select { cursor: pointer; }
+    .filter-count {
+        font-size: 12px;
+        color: #999;
+        white-space: nowrap;
+        margin-left: auto;
+    }
+
+    /* Table */
+    .table-wrap {
+        background: white;
+        border-radius: 10px;
+        border: 1px solid #DDD5C8;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    thead {
+        background: #1a2b1a;
+        color: #c8e6c8;
+    }
+    thead th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+    tbody tr {
+        border-bottom: 1px solid #EDE8E0;
+        transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #F9F6F0; }
+    tbody td {
+        padding: 12px 16px;
+        color: #333;
+        vertical-align: middle;
+    }
+    .td-name { font-weight: 600; color: #1a2410; }
+    .td-linkedin a {
+        color: #0a66c2;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .td-linkedin a:hover { text-decoration: underline; }
+    .td-linkedin .no-share {
+        font-size: 12px;
+        color: #bbb;
+        font-style: italic;
+    }
+    .td-empty { color: #ccc; font-style: italic; font-size: 12px; }
+
+    .no-results {
+        padding: 48px 16px;
+        text-align: center;
+        color: #aaa;
+        font-size: 14px;
+    }
+
+    /* Loading spinner */
+    .loading {
+        padding: 48px 16px;
+        text-align: center;
+        color: #aaa;
+        font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+        .page-header { padding: 16px 16px; }
+        .colleagues-wrap { padding: 14px 12px; }
+        .filter-bar input[type="text"],
+        .filter-bar select { min-width: 100%; flex: unset; width: 100%; }
+        .filter-count { margin-left: 0; }
+
+        /* Responsive table: hide less important columns */
+        thead th:nth-child(3),
+        tbody td:nth-child(3) { display: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Find Colleague</h1>
+    <p>Browse professionals who have worked or are working at sport events</p>
+</div>
+
+<div class="colleagues-wrap">
+
+    <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="Search by name…" oninput="applyFilters()" />
+        <select id="filterRole" onchange="applyFilters()">
+            <option value="">All roles</option>
+        </select>
+        <select id="filterArea" onchange="applyFilters()">
+            <option value="">All functional areas</option>
+        </select>
+        <select id="filterEvent" onchange="applyFilters()">
+            <option value="">All events</option>
+        </select>
+        <span class="filter-count" id="filterCount"></span>
+    </div>
+
+    <div class="table-wrap">
+        <div class="loading" id="loadingMsg">Loading…</div>
+        <table id="colleaguesTable" style="display:none">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Functional Area</th>
+                    <th>Event</th>
+                    <th>LinkedIn</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div class="no-results" id="noResults" style="display:none">No colleagues match your filters.</div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let allData = [];
+
+    function esc(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function safeUrl(url) {
+        const s = String(url || '').trim();
+        if (!s) return '';
+        return /^https?:\/\//i.test(s) ? s : 'https://' + s;
+    }
+
+    function populateSelect(id, values) {
+        const sel = document.getElementById(id);
+        [...new Set(values.filter(Boolean))].sort().forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v; opt.textContent = v;
+            sel.appendChild(opt);
+        });
+    }
+
+    function applyFilters() {
+        const search    = document.getElementById('searchInput').value.trim().toLowerCase();
+        const roleVal   = document.getElementById('filterRole').value;
+        const areaVal   = document.getElementById('filterArea').value;
+        const eventVal  = document.getElementById('filterEvent').value;
+
+        const filtered = allData.filter(p => {
+            if (search   && !(p.name  || '').toLowerCase().includes(search))   return false;
+            if (roleVal  && (p.role  || '') !== roleVal)  return false;
+            if (areaVal  && (p.area  || '') !== areaVal)  return false;
+            if (eventVal && (p.event || '') !== eventVal) return false;
+            return true;
+        });
+
+        renderTable(filtered);
+    }
+
+    function renderTable(data) {
+        const tbody    = document.getElementById('tableBody');
+        const noRes    = document.getElementById('noResults');
+        const countEl  = document.getElementById('filterCount');
+        const table    = document.getElementById('colleaguesTable');
+
+        countEl.textContent = `${data.length} colleague${data.length !== 1 ? 's' : ''}`;
+
+        if (!data.length) {
+            tbody.innerHTML = '';
+            table.style.display = 'none';
+            noRes.style.display = 'block';
+            return;
+        }
+
+        noRes.style.display  = 'none';
+        table.style.display  = '';
+
+        tbody.innerHTML = data.map(p => `
+            <tr>
+                <td class="td-name">${esc(p.name) || '<span class="td-empty">—</span>'}</td>
+                <td>${p.role  ? esc(p.role)  : '<span class="td-empty">—</span>'}</td>
+                <td>${p.area  ? esc(p.area)  : '<span class="td-empty">—</span>'}</td>
+                <td>${p.event ? esc(p.event) : '<span class="td-empty">—</span>'}</td>
+                <td class="td-linkedin">${
+                    p.linkedin
+                        ? `<a href="${safeUrl(esc(p.linkedin))}" target="_blank" rel="noopener noreferrer">🔗 View profile</a>`
+                        : '<span class="no-share">Not shared</span>'
+                }</td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadData() {
+        try {
+            const res = await fetch('/api/points');
+            if (res.status === 401) { window.location.href = '/login'; return; }
+            allData = await res.json();
+
+            populateSelect('filterRole',  allData.map(p => p.role));
+            populateSelect('filterArea',  allData.map(p => p.area));
+            populateSelect('filterEvent', allData.map(p => p.event));
+
+            document.getElementById('loadingMsg').style.display = 'none';
+            renderTable(allData);
+        } catch (err) {
+            document.getElementById('loadingMsg').textContent = 'Error loading data.';
+        }
+    }
+
+    loadData();
+</script>
+{% endblock %}
