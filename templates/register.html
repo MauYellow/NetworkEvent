@@ -722,8 +722,6 @@
             }
 
             // Validation passed — warn if no location set
-            const lat = document.getElementById('lat').value;
-            const lon = document.getElementById('lon').value;
             if (!lat || !lon) {
                 document.getElementById('locationWarnModal').style.display = 'flex';
                 return;
